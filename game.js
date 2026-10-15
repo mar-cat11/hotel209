@@ -306,11 +306,21 @@ export function createGame({playSe, mode, beforeLeftLift, ending, data, scene, c
   render();
   const flickerMaterials=new Set();
   rooms[207].root.traverse(o=>{if(o.isMesh)for(const m of (Array.isArray(o.material)?o.material:[o.material]))if(m.name==='CircusFlicker')flickerMaterials.add(m);});
+  // The first time the player walks up to the courtyard window, the shadow event starts by itself.
+  const AUTO_WINDOW_DISTANCE=1.5, autoWindowPoint=new THREE.Vector3();let autoWindowBox=null, autoWindowTried=false;
+  function autoCourtyardWindow(){
+    if(autoWindowTried || state.flags.includes('shadowSeen'))return;
+    const o=objects.get('courtyardWindow');if(!o)return;
+    if(!autoWindowBox){o.hit.updateWorldMatrix(true,false);autoWindowBox=new THREE.Box3().setFromObject(o.hit);}
+    autoWindowPoint.copy(camera.position);autoWindowPoint.y=THREE.MathUtils.clamp(autoWindowPoint.y,autoWindowBox.min.y,autoWindowBox.max.y);
+    if(autoWindowBox.distanceToPoint(autoWindowPoint)<AUTO_WINDOW_DISTANCE && interact('courtyardWindow'))autoWindowTried=true;   // once only, even if the event is backed out of
+  }
   function update(t) {
     updateBlackout();
     bagButton.hidden=blackoutPhase!=='idle' || doorMessage || presentation.active || boxOpening;
     hintButton.hidden=mode!=='easy' || bagButton.hidden || inventoryPhase!=='closed';
     presentation.update(t);
+    autoCourtyardWindow();
     if(liftOpening && doorObjects.get('leftLift').t===1){liftOpening=false;liftOpenedAt=performance.now();}   // real time: game time is frozen during the lift event
     if(liftOpenedAt!==null && performance.now()-liftOpenedAt>=1500){liftOpenedAt=null;liftMsgStep=1;presentation.message(data.messages.clownReveal);presentation.setBusy(false);}
     eventFigure.userData.update?.(t);
