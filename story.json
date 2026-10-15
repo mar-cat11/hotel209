@@ -1,0 +1,996 @@
+{
+  "version": 1,
+  "items": {
+    "star": {
+      "label": "「猫」のメダリオン",
+      "icon": "猫",
+      "shortLabel": "「猫」"
+    },
+    "octopus": {
+      "label": "「クイーン」のメダリオン",
+      "icon": "♛",
+      "shortLabel": "「クイーン」"
+    },
+    "cat": {
+      "label": "「山荘」のメダリオン",
+      "icon": "山",
+      "shortLabel": "「山荘」"
+    },
+    "island": {
+      "label": "「島」のプレート",
+      "icon": "島",
+      "shortLabel": "「島」"
+    },
+    "ship": {
+      "label": "「船」のプレート",
+      "icon": "船",
+      "shortLabel": "「船」"
+    },
+    "moon": {
+      "label": "「月」のプレート",
+      "icon": "🌕",
+      "shortLabel": "「月」"
+    },
+    "key205": {
+      "label": "205の鍵",
+      "icon": "⚿"
+    },
+    "card": {
+      "label": "カードキー",
+      "icon": "▣"
+    },
+    "emergency": {
+      "label": "非常口の鍵",
+      "icon": "⚿"
+    },
+    "flashlight": {
+      "label": "懐中電灯",
+      "icon": "🔦"
+    }
+  },
+  "interactables": [
+    {
+      "id": "welcome",
+      "label": "ようこそ",
+      "position": [
+        4.64,
+        1.62,
+        19.62
+      ],
+      "kind": "inspect",
+      "message": "当ホテルへようこそ。あなたのお部屋は209号室です。ごゆっくりおくつろぎください。",
+      "result": {
+        "flags": [
+          "welcomed"
+        ]
+      },
+      "shape": "panel",
+      "rotation": 1.5708,
+      "messageLines": [
+        "当ホテルへようこそ。",
+        "あなたのお部屋は209号室です。",
+        "ごゆっくりおくつろぎください。"
+      ],
+      "presentation": "event",
+      "camera": {
+        "position": [
+          5.0,
+          1.62,
+          19.62
+        ],
+        "target": [
+          4.462,
+          1.62,
+          19.62
+        ],
+        "fov": 36
+      },
+      "fitPortrait": true
+    },
+    {
+      "id": "courtyardWindow",
+      "label": "209・中庭の窓",
+      "position": [
+        17.52,
+        1.28,
+        15.85
+      ],
+      "room": 202,
+      "kind": "inspect",
+      "message": "向こうの部屋に人影が見える。あの部屋は...220号室か。",
+      "result": {
+        "flags": [
+          "shadowSeen"
+        ]
+      },
+      "shape": "panel",
+      "presentation": "event",
+      "camera": {
+        "position": [
+          19.3,
+          1.27,
+          20.3
+        ],
+        "target": [
+          19.3,
+          1.27,
+          21.94
+        ],
+        "fov": 80
+      },
+      "messageLines": [
+        "向こうの部屋に人影が見える。あの部屋は...220号室か。"
+      ],
+      "hitSize": [
+        2.394,
+        2.36,
+        0.08
+      ],
+      "fitPortrait": true
+    },
+    {
+      "id": "starMedal",
+      "label": "「猫」のメダリオン",
+      "position": [
+        17.66,
+        0.78,
+        25.0
+      ],
+      "room": 220,
+      "kind": "pickup",
+      "message": "「猫」のメダリオンを手に入れた。",
+      "result": {
+        "give": [
+          "star"
+        ],
+        "flags": [
+          "starFound"
+        ]
+      },
+      "once": "starFound",
+      "presentation": "item",
+      "messageLines": [
+        "「猫」のメダリオンがある",
+        "取りますか？"
+      ],
+      "pickupMessageLines": [
+        "「猫」のメダリオンがある",
+        "取りますか？"
+      ],
+      "model": "medallion",
+      "motif": "cat",
+      "medalAngle": 1.5708
+    },
+    {
+      "id": "seaWindow",
+      "label": "203・海の窓",
+      "position": [
+        0.12,
+        1.4,
+        4.8
+      ],
+      "room": 209,
+      "kind": "inspect",
+      "message": "窓からは海が見える。",
+      "result": {
+        "flags": [
+          "seaSeen"
+        ]
+      },
+      "shape": "panel",
+      "rotation": 1.5708,
+      "presentation": "event",
+      "camera": {
+        "position": [
+          0.85,
+          1.65,
+          4.8
+        ],
+        "target": [
+          -90,
+          1.65,
+          4.8
+        ],
+        "fov": 62
+      },
+      "messageLines": [
+        "窓からは海が見える。"
+      ],
+      "hitSize": [
+        2.306,
+        2.296,
+        0.48
+      ],
+      "hitOffset": [
+        0,
+        -0.098,
+        0.2
+      ]
+    },
+    {
+      "id": "moonPlate",
+      "label": "「月」のプレート",
+      "position": [
+        3.5,
+        0.8499964,
+        0.5
+      ],
+      "room": 209,
+      "kind": "pickup",
+      "result": {
+        "give": [
+          "moon"
+        ],
+        "flags": [
+          "moonFound"
+        ]
+      },
+      "once": "moonFound",
+      "message": "「月」のプレートを手に入れた。",
+      "model": "plate",
+      "motif": "moon",
+      "plateAngle": -0.15,
+      "presentation": "item",
+      "messageLines": [
+        "「月」のプレートがある",
+        "取りますか？"
+      ],
+      "pickupMessageLines": [
+        "「月」のプレートがある",
+        "取りますか？"
+      ]
+    },
+    {
+      "id": "islandPlate",
+      "label": "「島」のプレート",
+      "position": [
+        0.3,
+        0.4125018,
+        8.65
+      ],
+      "room": 209,
+      "kind": "pickup",
+      "result": {
+        "give": [
+          "island"
+        ],
+        "flags": [
+          "islandFound"
+        ]
+      },
+      "once": "islandFound",
+      "message": "「島」のプレートを手に入れた。",
+      "model": "plate",
+      "motif": "island",
+      "plateAngle": 0.12,
+      "labelOffset": [
+        0.35,
+        0.36,
+        0
+      ],
+      "presentation": "item",
+      "messageLines": [
+        "「島」のプレートがある",
+        "取りますか？"
+      ],
+      "pickupMessageLines": [
+        "「島」のプレートがある",
+        "取りますか？"
+      ]
+    },
+    {
+      "id": "shipPlate",
+      "label": "「船」のプレート",
+      "position": [
+        3.4,
+        0.576061,
+        5.45
+      ],
+      "room": 209,
+      "kind": "pickup",
+      "result": {
+        "give": [
+          "ship"
+        ],
+        "flags": [
+          "shipFound"
+        ]
+      },
+      "once": "shipFound",
+      "message": "「船」のプレートを手に入れた。",
+      "model": "plate",
+      "motif": "ship",
+      "plateAngle": -0.25,
+      "presentation": "item",
+      "messageLines": [
+        "「船」のプレートがある",
+        "取りますか？"
+      ],
+      "pickupMessageLines": [
+        "「船」のプレートがある",
+        "取りますか？"
+      ]
+    },
+    {
+      "id": "painting",
+      "label": "203・海の絵画",
+      "position": [
+        1.3,
+        1.55,
+        0.07
+      ],
+      "room": 209,
+      "kind": "grid",
+      "shape": "panel",
+      "rotation": 0,
+      "answer": {
+        "moon": 2,
+        "island": 4,
+        "ship": 6
+      },
+      "once": "paintingSolved",
+      "result": {
+        "take": [
+          "moon",
+          "island",
+          "ship"
+        ],
+        "flags": [
+          "paintingSolved"
+        ]
+      },
+      "message": "小箱から「カチッ」と音がした。",
+      "model": "painting",
+      "wall": 0,
+      "presentation": "event",
+      "camera": {
+        "position": [
+          1.3,
+          1.5,
+          1.2
+        ],
+        "target": [
+          1.3,
+          1.5,
+          0.07
+        ],
+        "fov": 48
+      },
+      "messageLines": [
+        "海の景色を描いた絵だ。",
+        "プレートをはめますか？"
+      ],
+      "presentationChoice": true
+    },
+    {
+      "id": "box203",
+      "label": "203・小箱",
+      "position": [
+        1.3,
+        0.75,
+        0.27
+      ],
+      "room": 209,
+      "kind": "box",
+      "model": "box203",
+      "result": {
+        "give": [
+          "octopus"
+        ],
+        "flags": [
+          "queenTaken"
+        ]
+      },
+      "message": "「クイーン」のメダリオンを手に入れた。",
+      "pickupMessageLines": [
+        "「クイーン」のメダリオンがある",
+        "取りますか？"
+      ],
+      "motif": "queen",
+      "takenFlag": "queenTaken",
+      "openedFlag": "box203Opened",
+      "unlockFlag": "paintingSolved",
+      "presentationChoice": true
+    },
+    {
+      "id": "hieroglyph",
+      "label": "214・象形文字の絵",
+      "position": [
+        8.255,
+        1.545,
+        34.15
+      ],
+      "room": 215,
+      "kind": "inspect",
+      "shape": "panel",
+      "rotation": -1.5707963267948966,
+      "message": "",
+      "result": {
+        "flags": [
+          "glyphSeen"
+        ]
+      },
+      "presentation": "event",
+      "camera": {
+        "position": [
+          6.95,
+          1.545,
+          34.15
+        ],
+        "target": [
+          8.255,
+          1.545,
+          34.15
+        ],
+        "fov": 48
+      },
+      "messageLines": [],
+      "silentFinish": true
+    },
+    {
+      "id": "dialBox",
+      "label": "214・ダイヤルの箱",
+      "position": [
+        8.02,
+        0,
+        34.15
+      ],
+      "room": 215,
+      "kind": "dial",
+      "answer": "4214",
+      "result": {
+        "give": [
+          "cat"
+        ],
+        "flags": [
+          "lodgeTaken"
+        ]
+      },
+      "message": "「山荘」のメダリオンを手に入れた。",
+      "messageLines": [
+        "「山荘」のメダリオンがある",
+        "取りますか？"
+      ],
+      "pickupMessageLines": [
+        "「山荘」のメダリオンがある",
+        "取りますか？"
+      ],
+      "model": "box203",
+      "motif": "lodge",
+      "takenFlag": "lodgeTaken",
+      "openedFlag": "box214Opened",
+      "unlockFlag": "dialSolved",
+      "presentationChoice": true,
+      "rotation": -1.5707963267948966
+    },
+    {
+      "id": "rightLift",
+      "label": "右エレベーター・3つのメダリオン",
+      "position": [
+        4.6,
+        1.435,
+        18.02
+      ],
+      "kind": "slots",
+      "accept": [
+        "star",
+        "octopus",
+        "cat"
+      ],
+      "once": "rightElevatorOpened",
+      "result": {
+        "flags": [
+          "rightElevatorOpened"
+        ],
+        "open": [
+          "rightLift"
+        ]
+      },
+      "message": "3つのメダリオンがそろい、右の扉が開いた。",
+      "shape": "panel",
+      "rotation": 1.5707963267948966,
+      "model": "medalPanel",
+      "wall": 0.04,
+      "slots": [
+        {
+          "item": "star",
+          "motif": "cat"
+        },
+        {
+          "item": "cat",
+          "motif": "lodge"
+        },
+        {
+          "item": "octopus",
+          "motif": "queen"
+        }
+      ],
+      "scale": 0.7,
+      "callLamp": {
+        "position": [
+          4.552,
+          1.265,
+          18.02
+        ],
+        "rotation": 1.5707963267948966,
+        "size": [
+          0.08,
+          0.01,
+          0.003
+        ],
+        "flag": "rightElevatorOpened"
+      },
+      "presentation": "event",
+      "messageLines": [],
+      "fitPortrait": true,
+      "camera": {
+        "position": [
+          5.61,
+          1.23,
+          18.02
+        ],
+        "target": [
+          4.56,
+          1.23,
+          18.02
+        ],
+        "fov": 40
+      }
+    },
+    {
+      "id": "liftBox",
+      "label": "エレベーターの箱",
+      "position": [
+        2.72,
+        0.8,
+        17.2
+      ],
+      "kind": "box",
+      "requires": {
+        "flags": [
+          "rightElevatorOpened"
+        ]
+      },
+      "result": {
+        "give": [
+          "key205"
+        ],
+        "flags": [
+          "key205Found"
+        ]
+      },
+      "message": "205の鍵を手に入れた。",
+      "messageLines": [
+        "205の鍵がある",
+        "取りますか？"
+      ],
+      "pickupMessageLines": [
+        "205の鍵がある",
+        "取りますか？"
+      ],
+      "model": "box203",
+      "itemModel": "key205",
+      "rotation": 1.5707963267948966,
+      "takenFlag": "key205Found",
+      "openedFlag": "liftBoxOpened",
+      "presentationChoice": true
+    },
+    {
+      "id": "clown",
+      "label": "205・カードを持つピエロ",
+      "position": [
+        9.55,
+        0.91,
+        3.5
+      ],
+      "room": 207,
+      "kind": "pickup",
+      "once": "cardFound",
+      "requires": {
+        "flags": [
+          "room205Unlocked"
+        ]
+      },
+      "result": {
+        "give": [
+          "card"
+        ],
+        "flags": [
+          "cardFound"
+        ]
+      },
+      "message": "ピエロが持っていたカードキーを手に入れた。",
+      "model": "room205Clown",
+      "hideMaterials": [
+        "CircusCard",
+        "CircusCardChip"
+      ],
+      "presentation": "item",
+      "messageLines": [
+        "カードキーがある",
+        "取りますか？"
+      ],
+      "pickupMessageLines": [
+        "カードキーがある",
+        "取りますか？"
+      ]
+    },
+    {
+      "id": "bathSlot",
+      "model": "box203",
+      "ledFlag": "bathCardUsed",
+      "label": "206浴室・スリットの小箱",
+      "position": [
+        9.38,
+        0.85,
+        10.77
+      ],
+      "room": 201,
+      "kind": "use",
+      "item": "card",
+      "result": {
+        "give": [
+          "emergency"
+        ],
+        "flags": [
+          "emergencyFound"
+        ]
+      },
+      "message": "非常口の鍵を手に入れた。",
+      "presentation": "event",
+      "messageLines": [
+        "非常口の鍵がある",
+        "取りますか？"
+      ],
+      "pickupMessageLines": [
+        "非常口の鍵がある",
+        "取りますか？"
+      ],
+      "boxModel": "steelbox",
+      "itemModel": "key",
+      "rotation": 1.5707963267948966,
+      "unlockFlag": "bathCardUsed",
+      "openedFlag": "bathBoxOpened",
+      "takenFlag": "emergencyFound",
+      "presentationChoice": true
+    },
+    {
+      "id": "leftLift",
+      "label": "左エレベーター・カードリーダー",
+      "position": [
+        4.6,
+        1.44,
+        21.72
+      ],
+      "kind": "use",
+      "item": "card",
+      "once": "leftElevatorOpened",
+      "result": {
+        "flags": [
+          "leftElevatorOpened"
+        ],
+        "open": [
+          "leftLift"
+        ],
+        "event": "leftElevatorOpened"
+      },
+      "message": "左の扉が開いた。",
+      "shape": "panel",
+      "rotation": 1.5707963267948966,
+      "model": "cardReader",
+      "wall": 0.04,
+      "ledFlag": "leftElevatorOpened",
+      "callLamp": {
+        "position": [
+          4.552,
+          1.265,
+          21.72
+        ],
+        "rotation": 1.5707963267948966,
+        "size": [
+          0.08,
+          0.01,
+          0.003
+        ],
+        "flag": "leftElevatorOpened"
+      },
+      "presentation": "event",
+      "messageLines": [],
+      "fitPortrait": true,
+      "camera": {
+        "position": [
+          5.25,
+          1.4,
+          21.72
+        ],
+        "target": [
+          4.56,
+          1.4,
+          21.72
+        ],
+        "fov": 40
+      }
+    }
+  ],
+  "doors": {
+    "room205": {
+      "unlockFlag": "room205Unlocked",
+      "unlockMessage": "205号室の鍵を使って鍵を開けた。",
+      "requires": {
+        "items": [
+          "key205"
+        ]
+      },
+      "result": {
+        "flags": [
+          "room205Unlocked"
+        ]
+      }
+    },
+    "exitNorth": {
+      "unlockFlag": "exitNorthUnlocked",
+      "unlockMessage": "非常口の鍵を使って鍵を開けた。",
+      "requires": {
+        "items": [
+          "emergency"
+        ]
+      }
+    },
+    "exitSouth": {
+      "unlockFlag": "exitSouthUnlocked",
+      "unlockMessage": "非常口の鍵を使って鍵を開けた。",
+      "requires": {
+        "items": [
+          "emergency"
+        ]
+      }
+    },
+    "room220": {
+      "requires": {
+        "flags": [
+          "shadowSeen"
+        ]
+      },
+      "result": {
+        "flags": [
+          "clownGone"
+        ]
+      }
+    }
+  },
+  "specialDoors": [
+    {
+      "id": "rightLift",
+      "type": "lift",
+      "z": 17.2
+    },
+    {
+      "id": "leftLift",
+      "type": "lift",
+      "z": 20.9
+    },
+    {
+      "id": "exitNorth",
+      "type": "exit",
+      "name": "北の非常口",
+      "hinge": [
+        21.65,
+        9.53
+      ],
+      "other": [
+        22.55,
+        9.53
+      ],
+      "inward": [
+        0,
+        1
+      ],
+      "width": 0.9,
+      "height": 2.15,
+      "closedBox": {
+        "min": [
+          21.65,
+          9.504999999999999
+        ],
+        "max": [
+          22.55,
+          9.555
+        ]
+      },
+      "openBox": {
+        "min": [
+          21.625,
+          9.53
+        ],
+        "max": [
+          21.675,
+          10.43
+        ]
+      }
+    },
+    {
+      "id": "exitSouth",
+      "type": "exit",
+      "name": "南の非常口",
+      "hinge": [
+        21.65,
+        28.27
+      ],
+      "other": [
+        22.55,
+        28.27
+      ],
+      "inward": [
+        0,
+        -1
+      ],
+      "width": 0.9,
+      "height": 2.15,
+      "closedBox": {
+        "min": [
+          21.65,
+          28.245
+        ],
+        "max": [
+          22.55,
+          28.294999999999998
+        ]
+      },
+      "openBox": {
+        "min": [
+          21.625,
+          27.37
+        ],
+        "max": [
+          21.675,
+          28.27
+        ]
+      }
+    }
+  ],
+  "jumps": {
+    "ホール": [
+      6.9,
+      19,
+      90
+    ],
+    "203": [
+      3,
+      7.1,
+      0
+    ],
+    "205": [
+      9.7,
+      5,
+      0
+    ],
+    "206": [
+      11.3,
+      11.1,
+      90
+    ],
+    "209": [
+      17.5,
+      14.2,
+      180
+    ],
+    "214": [
+      7.2,
+      34.9,
+      -90
+    ],
+    "220": [
+      19.9,
+      25.6,
+      180
+    ],
+    "階段室": [
+      22.6,
+      18,
+      180
+    ]
+  },
+  "hints": [
+    {
+      "text": "209号室を調べてみよう。",
+      "done": [
+        "shadowSeen",
+        "starFound"
+      ]
+    },
+    {
+      "text": "220号室を調べてみよう。",
+      "done": [
+        "starFound",
+        "rightElevatorOpened"
+      ]
+    },
+    {
+      "text": "203号室を調べてみよう。",
+      "done": [
+        "queenTaken",
+        "rightElevatorOpened"
+      ]
+    },
+    {
+      "text": "214号室を調べてみよう。",
+      "done": [
+        "lodgeTaken",
+        "rightElevatorOpened"
+      ]
+    },
+    {
+      "text": "右のエレベーターに、メダリオンをはめてみよう。",
+      "done": [
+        "rightElevatorOpened"
+      ]
+    },
+    {
+      "text": "205号室を調べてみよう。",
+      "done": [
+        "cardFound"
+      ]
+    },
+    {
+      "text": "206号室の浴室を調べてみよう。",
+      "done": [
+        "emergencyFound",
+        "leftElevatorOpened"
+      ]
+    },
+    {
+      "text": "左のエレベーターにカードキーを使ってみよう。",
+      "done": [
+        "leftElevatorOpened"
+      ]
+    },
+    {
+      "text": "非常口の鍵で非常口を開けよう。",
+      "requires": [
+        "emergencyFound"
+      ],
+      "done": [
+        "exitNorthUnlocked",
+        "exitSouthUnlocked"
+      ]
+    },
+    {
+      "text": "ピエロを引き離して、左のエレベーターに乗り込もう。",
+      "done": []
+    }
+  ],
+  "messages": {
+    "captionChoices": "<button data-dial-answer=\"yes\">はい</button><button data-dial-answer=\"no\">いいえ</button>",
+    "blackoutNotice": "フロアの電気が消えたようだ。",
+    "flashlightAdvice": "落ちている懐中電灯を使おう。",
+    "inventoryLabel": "持ち物",
+    "inventoryDialog": "<section role=\"dialog\" aria-modal=\"true\" aria-label=\"持ち物\" tabindex=\"-1\"><div class=\"inventoryGrid\"></div></section>",
+    "hintLabel": "ヒント",
+    "hintQuestion": "ヒントを見ますか？",
+    "pickupDone": "手に入れた。",
+    "inspectDone": "調べた。",
+    "boxEmpty": "小箱は空だ。",
+    "slitBoxLocked": "スリットがついた小箱がある。\n開かないようだ。",
+    "slitBoxQuestion": "スリットがついた小箱がある。カードキーを使いますか？",
+    "boxLocked": "小箱がある。開かないようだ。",
+    "dialQuestion": "小箱にはダイヤル錠が付いている。回しますか？",
+    "cardQuestion": "カードキーを使いますか？",
+    "clownWarning": "様子がおかしい。逃げなくては。",
+    "clownInspect": "ピエロのぬいぐるみだ。",
+    "platePlaced": "プレートをはめた。",
+    "roomSealed": "開かない。誰かが中で押さえているようだ。",
+    "room220Sealed": "開かない。向こう側から抑えられているようだ。",
+    "roomBroken": "鍵が壊れている。この部屋には入れないようだ。",
+    "roomLocked": "鍵がかかっている。",
+    "dialUnlocked": "鍵が開いた。",
+    "clownReveal": "エレベーターにはピエロが乗っていた。",
+    "presentationUI": "<button class=\"paintingBack\" hidden aria-label=\"戻る\">戻る</button><div class=\"presentationShade\"></div><div class=\"presentationFade\"></div><div class=\"presentationMessage\"><div class=\"presentationText\"></div><div class=\"presentationChoices\"><button data-answer=\"yes\">はい</button><button data-answer=\"no\">いいえ</button></div></div>",
+    "endingUI": "<div role=\"status\" aria-live=\"assertive\"></div><button type=\"button\">チェックポイントから再開</button><button type=\"button\" class=\"restart\" hidden>もう一度最初から始める</button>",
+    "clearResult": "<ruby>終了条件達成<rt>ゲームクリア</rt></ruby>",
+    "caughtResult": "GAME OVER",
+    "debugChase": "追跡開始",
+    "selectItem": "{item}を選んで使おう。",
+    "itemExistsSuffix": "がある",
+    "pickupQuestion": "取りますか？"
+  }
+}
