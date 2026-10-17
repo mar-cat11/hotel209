@@ -53,7 +53,7 @@ let updateGrain;
 const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.1, 9000);
 camera.rotation.order = 'YXZ';
 let renderer, world, game, flashlight, chase, ready = false;
-let yaw = 0, yawVel = 0, fwdVel = 0, checkPitch = 0, stepDist = 0;
+let yaw = 0, yawVel = 0, fwdVel = 0, sideVel = 0, checkPitch = 0, stepDist = 0, lookYaw = 0, lookPitch = 0;
 let pixelRatio = Math.min(devicePixelRatio || 1, lite ? 2 : 2);
 const keys = new Set();
 const joy = { active: false, id: null, x: 0, y: 0, cx: 0, cy: 0, t0: 0, moved: 0 };
@@ -512,7 +512,7 @@ function updateRooms() {
 
 // Gameplay assets use the same cache generation as the baked scene.
 const specialDoors = new Map();
-function setGamePose(x,z,degrees,pitch=0) {camera.position.set(x,world.eyeHeight,z);yaw=THREE.MathUtils.degToRad(degrees);checkPitch=THREE.MathUtils.degToRad(pitch);yawVel=fwdVel=0;camera.rotation.set(checkPitch,yaw,0);updateRooms();}
+function setGamePose(x,z,degrees,pitch=0) {camera.position.set(x,world.eyeHeight,z);yaw=THREE.MathUtils.degToRad(degrees);checkPitch=THREE.MathUtils.degToRad(pitch);yawVel=fwdVel=sideVel=lookYaw=lookPitch=0;camera.rotation.set(checkPitch,yaw,0);updateRooms();}
 async function initGameplay() {
   const [{createGame, preloadLiftProps, preloadBoxProps, preloadClown}, data] = await Promise.all([import('./game.js'), fetch('story.json'+V).then(r=>r.json())]);
   await Promise.all([preloadLiftProps(), preloadBoxProps(), preloadClown()]);   // preload medallions and hinged boxes behind the loading screen
@@ -572,7 +572,7 @@ addEventListener('keydown', e => {
   if (ready) keys.add(e.code);
 });
 addEventListener('keyup', e => keys.delete(e.code));
-addEventListener('blur', () => { keys.clear(); joy.active = false; joy.id = joy.tapId = null; joy.x = joy.y = 0; $('#knob').style.transform = ''; });
+addEventListener('blur', () => { keys.clear(); joy.active = false; joy.id = joy.tapId = null; joy.x = joy.y = 0; lookYaw = lookPitch = 0; $('#knob').style.transform = ''; });
 for (const type of ['gesturestart', 'gesturechange', 'gestureend', 'touchmove']) document.addEventListener(type, e => {if(!e.target.closest?.('#gameUI'))e.preventDefault();}, { passive: false });
 const ray = new THREE.Raycaster(); const ndc = new THREE.Vector2();
 function visibleInScene(o) { for (let p=o;p;p=p.parent) if (!p.visible) return false; return true; }
@@ -595,7 +595,10 @@ function bindPointer(el) {
     if (game?.paused) return;
     if (e.pointerId === joy.id) updateStick(e);
     else if (e.pointerId === joy.tapId) {
-      yaw -= (e.clientX - joy.lookX) * .005; checkPitch = Math.max(-1.2, Math.min(1.2, checkPitch - (e.clientY - joy.lookY) * .005));
+      // Drag only queues the turn; the frame loop eases it in. iOS delivers the first move with the touch slop
+      // already accumulated, so that first move only sets the origin.
+      if (joy.lookStarted) { lookYaw -= (e.clientX - joy.lookX) * .0032; lookPitch -= (e.clientY - joy.lookY) * .0024; }
+      joy.lookStarted = true;
       joy.lookMoved = Math.max(joy.lookMoved, Math.hypot(e.clientX - joy.tapX, e.clientY - joy.tapY));
       joy.lookX = e.clientX; joy.lookY = e.clientY;
     }
@@ -607,7 +610,7 @@ function bindPointer(el) {
       joy.id = e.pointerId; joy.active = true; joy.cx = cx; joy.cy = cy; joy.t0 = performance.now(); joy.moved = 0; joy.x = joy.y = 0;
       updateStick(e);
       el.setPointerCapture(e.pointerId);
-    } else if (joy.tapId == null) { joy.tapId = e.pointerId; joy.tapX = joy.lookX = e.clientX; joy.tapY = joy.lookY = e.clientY; joy.lookMoved = 0; joy.tapT = performance.now(); el.setPointerCapture(e.pointerId); }
+    } else if (joy.tapId == null) { joy.tapId = e.pointerId; joy.tapX = joy.lookX = e.clientX; joy.tapY = joy.lookY = e.clientY; joy.lookMoved = 0; joy.lookStarted = false; joy.tapT = performance.now(); el.setPointerCapture(e.pointerId); }
   });
   const end = e => {
     if (e.pointerId === joy.id) {
@@ -645,16 +648,19 @@ function animate(now) {
     const fwd = keys.has('ArrowUp') || keys.has('KeyW'), back = keys.has('ArrowDown') || keys.has('KeyS');
     const run = keys.has('ShiftLeft') || keys.has('ShiftRight');
     let turn = (left ? 1 : 0) - (right ? 1 : 0), move = (fwd ? 1 : 0) - (back ? 1 : 0);
-    if (game?.paused) {turn = move = 0; keys.clear(); joy.active = false; joy.id = joy.tapId = null; joy.x = joy.y = 0; $('#knob').style.transform = ''; yawVel = fwdVel = 0;}
-    if (joy.active) { const dz = 0.12; turn += -(Math.abs(joy.x) < dz ? 0 : joy.x); move += -(Math.abs(joy.y) < dz ? 0 : joy.y); }
+    if (game?.paused) {turn = move = 0; keys.clear(); joy.active = false; joy.id = joy.tapId = null; joy.x = joy.y = 0; $('#knob').style.transform = ''; yawVel = fwdVel = sideVel = lookYaw = lookPitch = 0;}
+    // Touch stick walks in the pushed direction (sideways = strafe); turning is the right-hand drag only.
+    let side = 0; if (joy.active) { const dz = 0.12; side = Math.abs(joy.x) < dz ? 0 : joy.x; move += -(Math.abs(joy.y) < dz ? 0 : joy.y); }
     turn = Math.max(-1, Math.min(1, turn)); move = Math.max(-1, Math.min(1, move));
     yawVel += (turn * YAW_RATE - yawVel) * (1 - Math.exp(-dt * 9));
-    const speed = (run || (joy.active && Math.hypot(joy.x, joy.y) > 0.95)) ? 3.2 : 1.55;
-    fwdVel += (move * speed - fwdVel) * (1 - Math.exp(-dt * 8));
+    const speed = (run || (joy.active && Math.hypot(joy.x, joy.y) > 0.95)) ? 2.2 : 1.4;
+    fwdVel += (move * speed - fwdVel) * (1 - Math.exp(-dt * 8)); sideVel += (side * speed - sideVel) * (1 - Math.exp(-dt * 8));
     yaw += yawVel * dt;
-    if (Math.abs(fwdVel) > 0.003) {
+    const ease = 1 - Math.exp(-dt * 35), dyaw = lookYaw * ease, dpitch = lookPitch * ease;
+    yaw += dyaw; lookYaw -= dyaw; checkPitch = Math.max(-1.2, Math.min(1.2, checkPitch + dpitch)); lookPitch -= dpitch;
+    if (Math.abs(fwdVel) > 0.003 || Math.abs(sideVel) > 0.003) {
       const px = camera.position.x, pz = camera.position.z;
-      const p = moveCircle(camera.position.x, camera.position.z, -Math.sin(yaw) * fwdVel * dt, -Math.cos(yaw) * fwdVel * dt, world, [...dynObstacles.values()]);
+      const p = moveCircle(camera.position.x, camera.position.z, (-Math.sin(yaw) * fwdVel + Math.cos(yaw) * sideVel) * dt, (-Math.cos(yaw) * fwdVel - Math.sin(yaw) * sideVel) * dt, world, [...dynObstacles.values()]);
       stepDist += Math.hypot(p[0] - px, p[1] - pz); if (stepDist > 1.4) { stepDist = 0; playSe('step', .5 + Math.random() * .15, .92 + Math.random() * .16); }
       camera.position.x = p[0]; camera.position.z = p[1];
     }
@@ -748,7 +754,7 @@ async function init() {
   renderer.setAnimationLoop(animate); updateRooms();
   if (params.has('check') || params.get('debug') === '1') window.hotelCheck = {
     ready: true, camera, world, doors, rooms,
-    setPose(x, z, yawDeg, pitchDeg = 0) { camera.position.x = x; camera.position.z = z; yaw = THREE.MathUtils.degToRad(yawDeg); checkPitch = THREE.MathUtils.degToRad(pitchDeg); yawVel = 0; fwdVel = 0; updateRooms(); },
+    setPose(x, z, yawDeg, pitchDeg = 0) { camera.position.x = x; camera.position.z = z; yaw = THREE.MathUtils.degToRad(yawDeg); checkPitch = THREE.MathUtils.degToRad(pitchDeg); yawVel = 0; fwdVel = 0; sideVel = 0; lookYaw = lookPitch = 0; updateRooms(); },
     async openRoom(n) { await ensureRoom(n); await waitTextures(); const d = rooms[n].door; if (!d.open) (d.geometryToggle ?? d.toggle)(); return true; },
     async loadRoom(n) { await ensureRoom(n); await waitTextures(); },
     stats() { return { calls: renderer.info.render.calls, triangles: renderer.info.render.triangles, textures: renderer.info.memory.textures, fps, pixelRatio, gameTime, pos: camera.position.toArray(), yaw }; },

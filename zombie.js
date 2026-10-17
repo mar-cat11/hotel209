@@ -130,7 +130,7 @@ export async function createChase({scene,camera,world,game,doors,specialDoors,dy
     if(Math.hypot(me[0]-you[0],me[1]-you[1])<3&&clear(me,you,boxes))path=[you];
     else if(replan<=0){const shut=new Set(autoDoors.filter(d=>!d.open).map(d=>dynObstacles.get('door'+d.room)));route(boxes.filter(b=>!shut.has(b)));replan=.35;}
     const ramp=Math.min(1,.12+.88*elapsed/5);walkAction.timeScale=ramp;   // slow first steps, full speed after 5 s
-    let travel=1.3*ramp*dt; // Player walking speed is 1.55 m/s.
+    let travel=1.3*ramp*dt; // Player walking speed is 1.4 m/s.
     while(travel>0&&path.length){const q=path[0],p=[figure.position.x,figure.position.z],distance=Math.hypot(q[0]-p[0],q[1]-p[1]);if(distance<.01){path.shift();continue;}
       const amount=Math.min(travel,distance),x=p[0]+(q[0]-p[0])*amount/distance,z=p[1]+(q[1]-p[1])*amount/distance;
       if(!collides(p[0],p[1],navWorld,boxes)&&!clear(p,[x,z],boxes)){path=[];replan=0;detour=1;break;}
