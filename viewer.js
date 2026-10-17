@@ -597,7 +597,7 @@ function bindPointer(el) {
     else if (e.pointerId === joy.tapId) {
       // Drag only queues the turn; the frame loop eases it in. iOS delivers the first move with the touch slop
       // already accumulated, so that first move only sets the origin.
-      if (joy.lookStarted) { lookYaw -= (e.clientX - joy.lookX) * .0032; lookPitch -= (e.clientY - joy.lookY) * .0024; }
+      if (joy.lookStarted) { lookYaw -= (e.clientX - joy.lookX) * .004; lookPitch -= (e.clientY - joy.lookY) * .003; }
       joy.lookStarted = true;
       joy.lookMoved = Math.max(joy.lookMoved, Math.hypot(e.clientX - joy.tapX, e.clientY - joy.tapY));
       joy.lookX = e.clientX; joy.lookY = e.clientY;
