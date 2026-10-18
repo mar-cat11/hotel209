@@ -1,0 +1,7 @@
+:root{color-scheme:dark}*{box-sizing:border-box}
+body{margin:0;background:#0b0d12;color:#e9e1d4;font:16px/1.8 system-ui,-apple-system,"Hiragino Sans",sans-serif}
+main{max-width:720px;margin:0 auto;padding:40px 16px 64px}
+h1{font-size:26px;margin:0 0 4px}h2{font-size:19px;margin:32px 0 8px;color:#e9c58f}
+.lang{margin:0 0 28px;font-size:14px}.lang a{color:#c0ad88;margin-right:14px}
+section+section{margin-top:56px;padding-top:40px;border-top:1px solid #2a2f33}
+a{color:#e9c58f}.date{color:#9a9184;font-size:14px}ul{padding-left:1.3em}
