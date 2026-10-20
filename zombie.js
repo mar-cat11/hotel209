@@ -142,5 +142,5 @@ export async function createChase({scene,camera,world,game,doors,specialDoors,dy
     if(camera.position.x<clearBounds.maxX&&camera.position.x>clearBounds.minX&&Math.abs(camera.position.z-clearBounds.z)<clearBounds.halfDepth)finish(true);
   }
   if(debug){const b=document.createElement('button');b.id='debugChase';b.textContent=messages.debugChase;b.onclick=()=>{if(active||ended)return;game.debugStartChase();};document.querySelector('#gameDebug').append(b);}
-  return {update,checkpoint,get movie(){return phase==='movie'&&movieTime>=.45?{scene:movieScene,camera:movieCamera}:null;},get ended(){return ended;},get active(){return active;},figure,stats:()=>({active,ended,position:figure.position.toArray(),path:path.map(p=>[...p]),elapsed,phase,movieTime,animation})};
+  return {update,checkpoint,get savedCheckpoint(){return saved?structuredClone(saved):null;},get movie(){return phase==='movie'&&movieTime>=.45?{scene:movieScene,camera:movieCamera}:null;},get ended(){return ended;},get active(){return active;},figure,stats:()=>({active,ended,position:figure.position.toArray(),path:path.map(p=>[...p]),elapsed,phase,movieTime,animation})};
 }

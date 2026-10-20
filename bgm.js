@@ -1,8 +1,13 @@
 // Gapless looping BGM + one-shot SE via Web Audio; starts on the first user gesture (iOS autoplay rule).
 // iOS can leave a context "interrupted" after the app is backgrounded, so a fresh context is built on return.
 let ctx = null;
+// The iOS app plays sound natively (HotelAudio plugin in ios_app): Web Audio in its WebView can stay silent after the
+// app returns from the background, while AVAudioEngine pauses and resumes with the app like any other iOS game.
+const native = window.Capacitor?.isNativePlatform?.() ? window.Capacitor.Plugins?.HotelAudio : null;
+const sentVolume = {};
 const seUrls = {}, seBufs = {}, loops = {};   // loops: extra looping sounds whose volume the game sets (e.g. carousel)
 export function startBgm(url, volume = 0.45, se = {}, extraLoops = {}) {
+  if (native) { native.start({ bgm: { url, volume }, se, loops: extraLoops }).catch(e => console.error(e)); return; }
   for (const [k, u] of Object.entries(extraLoops)) loops[k] ??= { url: u, buf: null, gain: null, vol: 0 };
   let buffer = null, started = false, building = null;
   Object.assign(seUrls, se);
@@ -61,12 +66,14 @@ export function startBgm(url, volume = 0.45, se = {}, extraLoops = {}) {
 }
 // Play a one-shot SE; silently skipped until audio is unlocked and the sound is decoded.
 export function playSe(name, volume = 1, rate = 1) {
+  if (native) { native.playSe({ name, volume, rate }); return; }
   const buf = seBufs[name]; if (!ctx || ctx.state !== 'running' || !buf) return;
   const g = ctx.createGain(); g.gain.value = volume; g.connect(ctx.destination);
   const s = ctx.createBufferSource(); s.buffer = buf; s.playbackRate.value = rate; s.connect(g); s.start();
 }
 // Set a looping sound's volume (0–1); eased so position updates don't click.
 export function setLoopVolume(name, v) {
+  if (native) { if (sentVolume[name] !== v) { sentVolume[name] = v; native.setLoopVolume({ name, volume: v }); } return; }
   const l = loops[name]; if (!l) return; l.vol = v;
   if (l.gain && ctx) l.gain.gain.setTargetAtTime(v, ctx.currentTime, .15);
 }

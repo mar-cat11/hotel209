@@ -58,7 +58,7 @@ export function buildBox(renderer, d) {
   let lamp=null,lastState={flags:[]};
   let progress=0, opening=null, started=0, resolveOpen;
   const setAngle=()=>{if(lid)lid.rotation.x=-progress*Math.PI*.58;};
-  const prop={group,hit,dial,presenting(active){medal.group.visible=!active;},sync(state){dial?.sync(state.flags.includes(d.unlockFlag));lastState=state;medal.sync(state);if(lamp)lamp.material.color.setHex(state.flags.includes(d.unlockFlag)?0x18ed48:0x640908);if(state.flags.includes(d.openedFlag)){progress=1;setAngle();}},
+  const prop={group,hit,dial,restore(state){progress=state.flags.includes(d.openedFlag)?1:0;opening=null;setAngle();},presenting(active){medal.group.visible=!active;},sync(state){dial?.sync(state.flags.includes(d.unlockFlag));lastState=state;medal.sync(state);if(lamp)lamp.material.color.setHex(state.flags.includes(d.unlockFlag)?0x18ed48:0x640908);if(state.flags.includes(d.openedFlag)){progress=1;setAngle();}},
     open(){if(progress===1)return Promise.resolve();if(opening)return opening;started=performance.now();return opening=new Promise(resolve=>{resolveOpen=resolve;});},
     update(){dial?.update();if(!opening)return;progress=Math.min(1,(performance.now()-started)/400);setAngle();if(progress===1){opening=null;resolveOpen();}},
   };

@@ -74,7 +74,9 @@ export function createFlashlight(scene, camera) {
     if(scene.fog&&fogStart)scene.fog.color.copy(fogStart).lerp(fogEnd,progress);
     applyBlackout();
   }
-  function acquire(){acquired=true;root.visible=false;uniforms.flashRange.value=10;}
+  // Hide only the table model: removing its (already dark) spot light would change the scene's light count and make
+  // three.js recompile every lit material at once, a visible stall right after the blackout.
+  function acquire(){acquired=true;for(const o of root.children)if(o!==light&&o!==light.target)o.visible=false;light.intensity=0;uniforms.flashRange.value=10;}
   function update(view, now, gain=1){
     uniforms.flashGain.value=gain;
 
@@ -82,5 +84,5 @@ export function createFlashlight(scene, camera) {
     else{root.updateMatrixWorld();pos.set(.102,0,0).applyMatrix4(root.matrixWorld);dir.set(1,.015,0).normalize().transformDirection(root.matrixWorld);}
     uniforms.flashPosition.value.copy(pos);uniforms.flashDirection.value.copy(dir);
   }
-  return {root,light,ready,register,trigger,fade,acquire,update,get progress(){return progress;},get blackout(){return blackout;},get acquired(){return acquired;},uniforms};
+  return {restore(){trigger();started=performance.now()-3000;fade(performance.now());acquire();},root,light,ready,register,trigger,fade,acquire,update,get progress(){return progress;},get blackout(){return blackout;},get acquired(){return acquired;},uniforms};
 }

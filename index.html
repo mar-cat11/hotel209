@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="hotel-version" content="20261017granny7">
+<meta name="hotel-version" content="20261020native1">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0b0d12">
 <title>Hotel 209</title>
@@ -15,21 +15,22 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 @media (min-aspect-ratio:3/4){#loading{background:linear-gradient(#0000 55%,#000c 92%),var(--opening-image) center/contain no-repeat,#07080c}}
 #loading .bar{width:min(60vw,260px);height:2px;background:#ffffff22;overflow:hidden}
 #loading .bar i{display:block;height:100%;width:0;background:#e9c58f;transition:width .2s}
-#loading.title .bar,#loading.title #lt{display:none}#loading:not(.title) #modes{display:none}
-#modes{display:flex;flex-direction:column;gap:14px;align-items:center}#modes button{font:inherit;font-size:16px;letter-spacing:.3em;text-indent:.3em;min-width:200px;padding:13px 0;color:#efe6d8;background:#000a;border:1px solid #c0ad8899;border-radius:4px;cursor:pointer;touch-action:manipulation}#modes button:focus-visible{outline:2px solid #efe6d8;outline-offset:4px}#title img{display:block;width:min(64vw,440px);height:auto;margin:0 auto;filter:drop-shadow(0 3px 10px #000)}
+#loading.title .bar,#loading.title #lt{display:none}#loading:not(.title) #startMenu{display:none}
+#startMenu{display:flex;flex-direction:column;gap:14px;align-items:center}#startMenu button{font:inherit;font-size:16px;letter-spacing:.3em;text-indent:.3em;min-width:200px;padding:13px 0;color:#efe6d8;background:#000a;border:1px solid #c0ad8899;border-radius:4px;cursor:pointer;touch-action:manipulation}#startMenu button:focus-visible{outline:2px solid #efe6d8;outline-offset:4px}#title img{display:block;width:min(64vw,440px);height:auto;margin:0 auto;filter:drop-shadow(0 3px 10px #000)}
 #lt .dots{display:inline-block;width:1.6em;text-align:left}#lt .pad{display:inline-block;width:1.6em}
 #title{position:absolute;top:calc(env(safe-area-inset-top) + 6.5vh);left:0;right:0;margin:0;text-align:center;font-family:"Hiragino Mincho ProN","Yu Mincho",serif;font-weight:600;font-size:clamp(34px,10vw,64px);letter-spacing:.25em;text-indent:.25em;color:#e9dcc6;text-shadow:0 2px 14px #000,0 0 3px #000}
-#loading.error{padding:24px;text-align:center;line-height:1.8}
+#loading.error{padding:24px;text-align:center;line-height:1.8}#retryButton{margin-top:14px;padding:8px 24px;font:inherit;color:#e8e0d0;background:#0006;border:1px solid #c0ad88;border-radius:4px}
 #stick{position:fixed;width:120px;height:120px;border:1px solid #ffffff44;border-radius:50%;background:#ffffff10;display:none;pointer-events:none;z-index:3}
 #knob{position:absolute;left:39px;top:39px;width:42px;height:42px;border-radius:50%;background:#ffffff40;border:1px solid #ffffff66}
 #tag{z-index:2;position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 14px);transform:translateX(-50%);font-size:12px;padding:6px 12px;border-radius:14px;background:#000a;pointer-events:none;opacity:0;transition:opacity .25s;white-space:nowrap}
 #tag.on{opacity:1}
+#langMenu{display:flex;gap:6px}#startMenu #langMenu button{min-width:0;padding:6px 12px;font-size:12px;letter-spacing:.12em;text-indent:.12em;color:#efe6d899;background:none;border-color:transparent}#startMenu #langMenu button[aria-pressed="true"]{color:#efe6d8;border-color:#c0ad8866}
 </style>
 <script>
 // Change only hotel-version above for a release. Exact URL mappings also cover relative addon imports.
 const hotelVersion='?v='+encodeURIComponent(document.querySelector('meta[name="hotel-version"]').content);
 const imports={};
-for(const path of ["layout.js", "loaders.js", "game.js", "collision.js", "bgm.js", "plateprops.js", "eventprops.js", "flashlight.js", "paintingdrag.js", "version.js", "viewer.js", "keyprops.js", "dialprops.js", "medalliondrag.js", "cardprops.js", "zombie.js", "inventory.js", "message-text.js", "presentation.js", "paintingprops.js", "resources.js", "liftprops.js", "boxprops.js", "vendor/three/three.module.js", "vendor/three/three.core.js", "vendor/three/addons/utils/SkeletonUtils.js", "vendor/three/addons/utils/BufferGeometryUtils.js", "vendor/three/addons/libs/draco/gltf/draco_decoder.js", "vendor/three/addons/libs/draco/gltf/draco_wasm_wrapper.js", "vendor/three/addons/loaders/GLTFLoader.js", "vendor/three/addons/loaders/DRACOLoader.js"]){imports['./'+path]='./'+path+hotelVersion;if(path.startsWith('vendor/three/addons/'))imports['three/addons/'+path.slice('vendor/three/addons/'.length)]='./'+path+hotelVersion;}
+for(const path of ["save.js", "settings.js", "layout.js", "loaders.js", "game.js", "collision.js", "bgm.js", "plateprops.js", "eventprops.js", "flashlight.js", "paintingdrag.js", "version.js", "viewer.js", "keyprops.js", "dialprops.js", "medalliondrag.js", "cardprops.js", "zombie.js", "inventory.js", "message-text.js", "presentation.js", "paintingprops.js", "resources.js", "liftprops.js", "boxprops.js", "vendor/three/three.module.js", "vendor/three/three.core.js", "vendor/three/addons/utils/SkeletonUtils.js", "vendor/three/addons/utils/BufferGeometryUtils.js", "vendor/three/addons/libs/draco/gltf/draco_decoder.js", "vendor/three/addons/libs/draco/gltf/draco_wasm_wrapper.js", "vendor/three/addons/loaders/GLTFLoader.js", "vendor/three/addons/loaders/DRACOLoader.js"]){imports['./'+path]='./'+path+hotelVersion;if(path.startsWith('vendor/three/addons/'))imports['three/addons/'+path.slice('vendor/three/addons/'.length)]='./'+path+hotelVersion;}
 imports.three='./vendor/three/three.module.js'+hotelVersion;
 imports['three/addons/']='./vendor/three/addons/';
 const map=document.createElement('script');map.type='importmap';map.textContent=JSON.stringify({imports});document.head.append(map);
@@ -37,11 +38,18 @@ document.documentElement.style.setProperty('--opening-image','url("ui/opening.jp
 </script>
 </head>
 <body>
-<div id="loading" class="title"><h1 id="title"><img data-logo="ui/logo.png" alt="ホテル209"></h1><div id="modes"><button type="button" data-mode="normal">NORMAL</button><button type="button" data-mode="easy">EASY</button></div><div id="lt"></div><div class="bar"><i id="lb"></i></div></div>
+<div id="loading" class="title"><h1 id="title"><img data-logo="ui/logo.png" alt="ホテル209"></h1><div id="startMenu"><button type="button" id="startButton">START</button><div id="langMenu" role="group" aria-label="Language"><button type="button" data-lang="ja">日本語</button><button type="button" data-lang="en">English</button></div></div><div id="lt"></div><div class="bar"><i id="lb"></i></div></div>
 <div id="tag">ドアをクリックで開閉</div>
 <div id="stick"><div id="knob"></div></div>
 <script>
 document.querySelector('#title img').src='ui/logo.png'+hotelVersion;
+// Language: ?lang= wins, then the saved choice, then the device language. Test URLs default to Japanese.
+const langButtons=document.querySelectorAll('#langMenu button'),query=new URLSearchParams(location.search);
+const setLang=l=>{document.documentElement.lang=l;for(const b of langButtons)b.setAttribute('aria-pressed',String(b.dataset.lang===l));};
+let savedLang=null;try{savedLang=localStorage.getItem('hotel-lang');}catch{}
+const wantLang=query.get('lang')??(query.has('check')||query.get('debug')==='1'?'ja':savedLang);
+setLang(wantLang==='ja'||wantLang==='en'?wantLang:/^ja\b/i.test(navigator.language)?'ja':'en');
+for(const b of langButtons)b.onclick=e=>{e.stopPropagation();setLang(b.dataset.lang);try{localStorage.setItem('hotel-lang',b.dataset.lang);}catch{}};
 const entry=document.createElement('script');entry.type='module';entry.src='./viewer.js'+hotelVersion;document.body.append(entry);
 </script>
 </body>

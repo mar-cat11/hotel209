@@ -2,10 +2,13 @@
 const segmenter = typeof Intl.Segmenter === 'function'
   ? new Intl.Segmenter('ja', {granularity:'word'}) : null;
 const particles = new Set(['は','が','を','に','へ','で','と','の','も','から','まで','より']);
+const japanese = /[\u3040-\u30ff\u3400-\u9fff]/u;
 export function messagePhrases(value) {
   const result=[];
   for (const line of String(value).split('\n')) {
     if(result.length)result.push('\n');
+    // Text without Japanese wraps between words; the spaces stay separate so lines can break there.
+    if(!japanese.test(line)){result.push(...(line.match(/\S+|\s+/gu)??[]));continue;}
     let phrase='';
     const flush=()=>{if(phrase){result.push(phrase);phrase='';}};
     // Quotes, numeric room identifiers and ellipses are indivisible tokens.
@@ -21,12 +24,14 @@ export function messagePhrases(value) {
 export function renderMessage(element,value,{highlight=''}={}) {
   fitMessageWidth(element);
   element.replaceChildren();
+  // The highlighted item name may sit anywhere in the message (English puts it mid-sentence).
+  const from=highlight?String(value).indexOf(highlight):-1,to=from+highlight.length;
   let offset=0;
   for(const phrase of messagePhrases(value)) {
-    if(phrase==='\n'){element.append(document.createTextNode('\n'));offset++;continue;}
+    if(phrase==='\n'||/^\s+$/.test(phrase)){element.append(document.createTextNode(phrase));offset+=phrase.length;continue;}
     const span=document.createElement('span');span.className='messagePhrase';
-    const end=Math.max(0,Math.min(phrase.length,highlight.length-offset));
-    if(end){const name=document.createElement('span');name.className='itemName';name.textContent=phrase.slice(0,end);span.append(name,document.createTextNode(phrase.slice(end)));}
+    const a=Math.max(0,from-offset),b=Math.min(phrase.length,to-offset);
+    if(from>=0&&a<b){const name=document.createElement('span');name.className='itemName';name.textContent=phrase.slice(a,b);span.append(...[phrase.slice(0,a),name,phrase.slice(b)].filter(x=>x!==''));}
     else span.textContent=phrase;
     element.append(span);offset+=phrase.length;
   }

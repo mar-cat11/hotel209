@@ -960,6 +960,17 @@
     }
   ],
   "messages": {
+    "settingsLabel": "設定",
+    "languageLabel": "言語",
+    "moveSpeedLabel": "移動速度",
+    "lookSensitivityLabel": "視点の感度",
+    "saveLabel": "セーブ",
+    "saveQuestion": "セーブしますか？",
+    "savedMessage": "セーブしました。",
+    "giveUpLabel": "タイトルに戻る",
+    "giveUpQuestion": "タイトルに戻りますか？\nセーブしていない進み具合は失われます。",
+    "closeLabel": "閉じる",
+    "privacyLabel": "プライバシーポリシー",
     "captionChoices": "<button data-dial-answer=\"yes\">はい</button><button data-dial-answer=\"no\">いいえ</button>",
     "blackoutNotice": "フロアの電気が消えたようだ。",
     "flashlightAdvice": "落ちている懐中電灯を使おう。",

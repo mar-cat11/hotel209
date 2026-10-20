@@ -1,3 +1,5 @@
+import {readSave,set,SAVE_KEY} from './save.js';
+import {settings,scales,runSpeeds} from './settings.js';
 import {layout} from './layout.js';
 import {V} from './version.js';
 import {gltfLoader, loadTexture} from './loaders.js';
@@ -512,9 +514,32 @@ function updateRooms() {
 
 // Gameplay assets use the same cache generation as the baked scene.
 const specialDoors = new Map();
+let continueSave=null;
+async function saveGame(){const state=game.snapshot(),checkpoint=state.flags.includes('leftElevatorOpened')?chase.savedCheckpoint:null;if(state.flags.includes('leftElevatorOpened')&&!checkpoint)return false;return set(SAVE_KEY,JSON.stringify({version:1,...(checkpoint??{state,doors:doors.map(d=>({open:d.open,t:d.t,dir:d.dir}))}),checkpoint:!!checkpoint}));}
 function setGamePose(x,z,degrees,pitch=0) {camera.position.set(x,world.eyeHeight,z);yaw=THREE.MathUtils.degToRad(degrees);checkPitch=THREE.MathUtils.degToRad(pitch);yawVel=fwdVel=sideVel=lookYaw=lookPitch=0;camera.rotation.set(checkPitch,yaw,0);updateRooms();}
+// English text lives in story.en.json and replaces only the shown strings; ids, rules and 3D labels stay as in story.json.
+function localizeStory(data, t) {
+  for (const [id, v] of Object.entries(t.items)) data.items[id] = {...data.items[id], tagLabel: data.items[id].label, ...v};
+  for (const d of data.interactables) Object.assign(d, t.interactables[d.id]);
+  for (const [id, v] of Object.entries(t.doors)) Object.assign(data.doors[id], v);
+  t.hints.forEach((text, i) => { data.hints[i].text = text; });
+  Object.assign(data.messages, t.messages);
+  return data;
+}
 async function initGameplay() {
-  const [{createGame, preloadLiftProps, preloadBoxProps, preloadClown}, data] = await Promise.all([import('./game.js'), fetch('story.json'+V).then(r=>r.json())]);
+  const [{createGame, preloadLiftProps, preloadBoxProps, preloadClown}, original, translation] = await Promise.all([import('./game.js'),fetch('story.json'+V).then(r=>r.json()),fetch('story.en.json'+V).then(r=>r.json())]);
+  const data=structuredClone(original);
+  function changeLanguage(lang){
+    // Keep object identities: props and presentations hold references to these definitions.
+    for(const [id,v] of Object.entries(translation.items))for(const k of Object.keys(v))data.items[id][k]=original.items[id][k];
+    for(const d of data.interactables){const source=original.interactables.find(o=>o.id===d.id);for(const k of Object.keys(translation.interactables[d.id]??{})){if(k in source)d[k]=structuredClone(source[k]);else delete d[k];}}
+    for(const [id,v] of Object.entries(translation.doors))for(const k of Object.keys(v))data.doors[id][k]=original.doors[id][k];
+    original.hints.forEach((h,i)=>data.hints[i].text=h.text);for(const k of Object.keys(translation.messages))if(!(k in original.messages))delete data.messages[k];Object.assign(data.messages,original.messages);
+    if(lang==='en')localizeStory(data,translation);
+    document.documentElement.lang=lang;try{localStorage.setItem('hotel-lang',lang);}catch{}
+    game?.relabel();
+  }
+  changeLanguage(document.documentElement.lang);
   await Promise.all([preloadLiftProps(), preloadBoxProps(), preloadClown()]);   // preload medallions and hinged boxes behind the loading screen
   const css=document.createElement('link');css.rel='stylesheet';css.href='game.css'+V;document.head.append(css);
   for(const d of data.specialDoors) {
@@ -541,7 +566,7 @@ async function initGameplay() {
     const d=room.door;d.geometryToggle=d.toggle;d.toggle=()=>{if(d.open || game.unlock(id))d.geometryToggle();};
   }
   flashlight=createFlashlight(scene,camera);await flashlight.ready;
-  game=createGame({playSe,mode,beforeLeftLift:()=>chase.checkpoint(), ending:()=>!!chase?.ended,data,scene,camera,rooms,flashlight,doorObjects:specialDoors,jump:setGamePose,debug:params.get('debug')==='1',renderer,canReach:(position,room)=>{
+  game=createGame({changeLanguage,save:saveGame,playSe,beforeLeftLift:()=>chase.checkpoint(), ending:()=>!!chase?.ended,data,scene,camera,rooms,flashlight,doorObjects:specialDoors,jump:setGamePose,debug:params.get('debug')==='1',renderer,canReach:(position,room)=>{
     const target=new THREE.Vector3(...position),distance=camera.position.distanceTo(target);
     if(distance>4.5 || (room && !rooms[room].root.visible))return false;
     const r=new THREE.Raycaster(camera.position,target.sub(camera.position).normalize(),.01,distance-.25);
@@ -561,6 +586,7 @@ async function initGameplay() {
     data.doors[id]={broken:true};
     doors.push({room:n,name:world.labels[n]+'号室のドア',kind:'broken',hit,open:false,center:[hit.position.x,hit.position.z],update:()=>{},toggle:()=>game.unlock(id)});
   }
+  if(continueSave){game.restore(continueSave.state);doors.forEach((d,i)=>{if(continueSave.doors?.[i])d.restore?.(continueSave.doors[i]);});setGamePose(...(continueSave.checkpoint?continueSave.pose:[world.start.x,world.start.z,world.start.yawDeg]));}
   // The table and plush are baked geometry in r207; game.js owns only their interaction.
 }
 
@@ -597,7 +623,7 @@ function bindPointer(el) {
     else if (e.pointerId === joy.tapId) {
       // Drag only queues the turn; the frame loop eases it in. iOS delivers the first move with the touch slop
       // already accumulated, so that first move only sets the origin.
-      if (joy.lookStarted) { lookYaw -= (e.clientX - joy.lookX) * .004; lookPitch -= (e.clientY - joy.lookY) * .003; }
+      if (joy.lookStarted) { lookYaw -= (e.clientX - joy.lookX) * .004 * scales[settings.sensitivity-1]; lookPitch -= (e.clientY - joy.lookY) * .003 * scales[settings.sensitivity-1]; }
       joy.lookStarted = true;
       joy.lookMoved = Math.max(joy.lookMoved, Math.hypot(e.clientX - joy.tapX, e.clientY - joy.tapY));
       joy.lookX = e.clientX; joy.lookY = e.clientY;
@@ -652,8 +678,8 @@ function animate(now) {
     // Touch stick walks in the pushed direction (sideways = strafe); turning is the right-hand drag only.
     let side = 0; if (joy.active) { const dz = 0.12; side = Math.abs(joy.x) < dz ? 0 : joy.x; move += -(Math.abs(joy.y) < dz ? 0 : joy.y); }
     turn = Math.max(-1, Math.min(1, turn)); move = Math.max(-1, Math.min(1, move));
-    yawVel += (turn * YAW_RATE - yawVel) * (1 - Math.exp(-dt * 9));
-    const speed = (run || (joy.active && Math.hypot(joy.x, joy.y) > 0.95)) ? 2.2 : 1.4;
+    yawVel += (turn * YAW_RATE * scales[settings.sensitivity-1] - yawVel) * (1 - Math.exp(-dt * 9));
+    const speed = ((run || (joy.active && Math.hypot(joy.x, joy.y) > 0.95)) ? runSpeeds[settings.speed-1] : 1.4);
     fwdVel += (move * speed - fwdVel) * (1 - Math.exp(-dt * 8)); sideVel += (side * speed - sideVel) * (1 - Math.exp(-dt * 8));
     yaw += yawVel * dt;
     const ease = 1 - Math.exp(-dt * 35), dyaw = lookYaw * ease, dpitch = lookPitch * ease;
@@ -691,6 +717,17 @@ function resize() {
 }
 addEventListener('resize', resize); addEventListener('orientationchange', () => setTimeout(resize, 150));
 visualViewport?.addEventListener('resize', resize); addEventListener('pageshow', () => setTimeout(resize, 50));
+// three.js uploads textures and compiles shaders the first time an object is drawn, which made phones stall when a
+// door first opened. Do both behind the loading screen; compile() covers hidden meshes too.
+async function prewarm() {
+  const textures = new Set();
+  scene.traverse(o => {
+    for (const m of [o.material ?? []].flat()) for (const v of [...Object.values(m), ...Object.values(m.uniforms ?? {}).map(u => u.value)])
+      if (v?.isTexture && !v.isRenderTargetTexture) textures.add(v);
+  });
+  for (const t of textures) renderer.initTexture(t);
+  await renderer.compileAsync(scene, camera);
+}
 async function waitTextures() {
   const t0 = performance.now();
   while (performance.now() - t0 < 25000) {
@@ -729,6 +766,8 @@ async function init() {
     setLoad(.35 + .6 * i / roomNumbers.length);
     await ensureRoom(n);
   }
+  // Before gameplay: a CONTINUE after the blackout darkens the fog colour while restoring (all env captures are done).
+  scene.fog = fogEnabled ? atmosphereFog : null;
   await initGameplay();
   // Sea clue props are built separately from hotel/courtyard meshes.
   for (const name of ['seaIsland', 'seaShip']) scene.getObjectByName(name)?.traverse(o => {
@@ -746,8 +785,8 @@ async function init() {
   });
   flashlight.register(scene);
   setLoad(.95);
-  scene.fog = fogEnabled ? atmosphereFog : null;
   updateGrain = createFilmGrain();
+  await prewarm();
   ready = true; setLoad(1);
   const hideLoading = () => { $('#loading').style.opacity = 0; $('#loading').style.pointerEvents = 'none'; setTimeout(() => $('#loading').remove(), 900); };
   hideLoading();
@@ -760,20 +799,18 @@ async function init() {
     stats() { return { calls: renderer.info.render.calls, triangles: renderer.info.render.triangles, textures: renderer.info.memory.textures, fps, pixelRatio, gameTime, pos: camera.position.toArray(), yaw }; },
     collides(x, z) { return collides(x, z, world, [...dynObstacles.values()]); },
     pick: (x, y) => pickDoor(x, y)?.name,
-    game, flashlight, specialDoors, chase,
+    game, flashlight, specialDoors, chase, settings,
     move(dx,dz) {const p=moveCircle(camera.position.x,camera.position.z,dx,dz,world,[...dynObstacles.values()]);camera.position.x=p[0];camera.position.z=p[1];updateRooms();return p;},
     scene,
 
   };
 }
-let mode = 'normal';
-const start = () => { $('#loading').classList.remove('title');
+const start = () => { $('#loading').classList.remove('title'); const english = document.documentElement.lang === 'en';
   // 「読み込み中」 with dots cycling 1→2→3→1 while the bar fills (pad keeps the word centred)
-  const lt = $('#lt'); lt.innerHTML = '<span class="pad"></span>読み込み中<span class="dots">.</span>'; let n = 1;
-  const tick = setInterval(() => { const d = lt.querySelector('.dots'); if (!d || !document.querySelector('#loading')) return clearInterval(tick); n = n % 3 + 1; d.textContent = '.'.repeat(n); }, 450); init().catch(e => { console.error(e); const l = $('#loading'); l.classList.add('error'); l.textContent = '読み込めませんでした。再読み込みしてください。'; window.hotelLoadError = String(e); }); };
+  const lt = $('#lt'); lt.innerHTML = `<span class="pad"></span>${english ? 'Loading' : '読み込み中'}<span class="dots">.</span>`; let n = 1;
+  const tick = setInterval(() => { const d = lt.querySelector('.dots'); if (!d || !document.querySelector('#loading')) return clearInterval(tick); n = n % 3 + 1; d.textContent = '.'.repeat(n); }, 450); init().catch(e => { console.error(e); const l = $('#loading'); l.classList.add('error'); l.textContent = english ? 'Could not load the game.' : '読み込めませんでした。'; const retry = document.createElement('button'); retry.type = 'button'; retry.id = 'retryButton'; retry.textContent = english ? 'Retry' : '再試行'; retry.onclick = () => location.reload(); l.append(document.createElement('br'), retry); window.hotelLoadError = String(e); }); };
 // Title screen: the tap starts loading (and the BGM, which needs a user gesture). Test URLs load at once.
-if (params.has('check') || params.get('debug') === '1') { mode = params.get('mode') ?? 'normal'; start(); }
-else {
-  // NORMAL / EASY (EASY adds the hint button); the choice lasts for this page session.
-  for (const b of document.querySelectorAll('#modes button')) b.onclick = e => { e.preventDefault(); e.stopPropagation(); if (!$('#loading').classList.contains('title')) return; mode = b.dataset.mode; start(); };
+if (params.has('check') || params.get('debug') === '1') start();
+else {readSave().then(saved=>{if(!saved||!$('#startButton'))return;const b=document.createElement('button');b.id='continueButton';b.type='button';b.textContent='CONTINUE';$('#startButton').after(b);b.onclick=e=>{e.preventDefault();e.stopPropagation();if(!$('#loading').classList.contains('title'))return;continueSave=saved;start();};});$('#startButton').onclick = e => { e.preventDefault(); e.stopPropagation(); if (!$('#loading').classList.contains('title')) return; start(); };
+
 }

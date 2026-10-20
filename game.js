@@ -1,3 +1,4 @@
+import {createSettings} from './settings.js';
 import {loadTexture} from './loaders.js';
 import {layout} from './layout.js';
 import {assetUrl} from './version.js';
@@ -16,8 +17,8 @@ import {createPresentation} from './presentation.js';
 import {LIFT_PROPS, buildCallLamp} from './liftprops.js';
 export {preloadLiftProps} from './liftprops.js';
 
-// Content lives in story.json. State is deliberately session-only.
-export function createGame({playSe, mode, beforeLeftLift, ending, data, scene, camera, rooms, doorObjects, jump, debug, canReach, renderer, flashlight}) {
+// Content lives in story.json; snapshots contain only gameplay state.
+export function createGame({changeLanguage, save, playSe, beforeLeftLift, ending, data, scene, camera, rooms, doorObjects, jump, debug, canReach, renderer, flashlight}) {
   const state = {items: [], used: [], flags: [], inserted: {}, placements: {}, selected: null};
   const objects = new Map(), listeners = new Set();
   const ui = document.createElement('div'); ui.id = 'gameUI';
@@ -96,19 +97,21 @@ export function createGame({playSe, mode, beforeLeftLift, ending, data, scene, c
   const bagButton=document.createElement('button');bagButton.id='bagButton';bagButton.type='button';bagButton.setAttribute('aria-label',data.messages.inventoryLabel);bagButton.setAttribute('aria-expanded','false');
   bagButton.innerHTML=`<svg viewBox="0 0 36 30" aria-hidden="true"><defs><linearGradient id="folderPaper" x2="0.4" y2="1"><stop stop-color="#b5a17a"/><stop offset="1" stop-color="#79684b"/></linearGradient></defs><path d="M4 8V5q0-2 2-2h9l3 4h12q2 0 2 2v16H4Z" fill="#75664e" stroke="#c0ad88" stroke-width=".7"/><path d="M3 11q0-2 2-2h25q2 0 2 2l-2 15H5Z" fill="url(#folderPaper)" stroke="#c0ad88" stroke-width=".8"/><path d="m7 12 20-.4M8 24l17 .3M6 14l-.4 7" stroke="#ded0b0" opacity=".24" fill="none"/></svg>`;
   const bagScreen=document.createElement('div');bagScreen.id='bagScreen';bagScreen.hidden=true;bagScreen.innerHTML=data.messages.inventoryDialog;ui.append(bagButton,bagScreen);
-  // EASY mode: magnifier above the bag shows the hint for the current progress (story.json hints, first unmet wins).
+  // Magnifier above the bag shows the hint for the current progress (story.json hints, first unmet wins).
   const hintButton=document.createElement('button');hintButton.id='hintButton';hintButton.type='button';hintButton.setAttribute('aria-label',data.messages.hintLabel);hintButton.hidden=true;
   hintButton.innerHTML='<svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="13" cy="13" r="8.5" fill="#0006" stroke="#c0ad88" stroke-width="2.6"/><path d="M19.5 19.5 28 28" stroke="#c0ad88" stroke-width="4" stroke-linecap="round"/></svg>';
   const currentHint=()=>{const has=f=>state.flags.includes(f);for(const h of data.hints??[]){if(h.requires&&!h.requires.every(has))continue;if(!h.done.some(g=>g.split('+').every(has)))return h.text;}return '';};
   hintButton.addEventListener('pointerdown',e=>e.stopPropagation());hintButton.onclick=e=>{consume(e);captionChoice=()=>say(currentHint(),true);say(data.messages.hintQuestion,true);};   // the pause message freezes time until answered
-  if(mode==='easy')ui.append(hintButton);
+  ui.append(hintButton);
+  const settingsUI=createSettings({ui,data,changeLanguage,save:()=>{captionChoice=()=>{save().then(ok=>{if(ok)say(data.messages.savedMessage,true);});};say(data.messages.saveQuestion,true);},giveUp:()=>{captionChoice=()=>{const url=new URL(location.href);url.searchParams.delete('check');url.searchParams.delete('debug');location.replace(url);};say(data.messages.giveUpQuestion,true);},blocked:()=>ending()||doorMessage||presentation.active||boxOpening||inventoryPhase!=='closed'||blackoutPhase!=='idle'});
+  function relabel(){hintButton.setAttribute('aria-label',data.messages.hintLabel);bagButton.setAttribute('aria-label',data.messages.inventoryLabel);bagScreen.querySelector('section').setAttribute('aria-label',data.messages.inventoryLabel);const template=document.createElement('template');template.innerHTML=data.messages.captionChoices;[...captionChoices.children].forEach((b,i)=>b.textContent=template.content.children[i].textContent);presentation.relabel();settingsUI.refresh();for(const o of objects.values())o.name=o.def.label;}
   function closeInventory(){
     if(inventoryPhase==='closed'||inventoryPhase==='closing')return;
     clearTimeout(inventoryTimer);inventoryPhase='closing';bagScreen.classList.remove('shown');
     inventoryTimer=setTimeout(()=>{bagScreen.hidden=true;inventoryPhase='closed';bagButton.setAttribute('aria-expanded','false');bagButton.focus({preventScroll:true});},240);
   }
   function openInventory(){
-    if(ending()||inventoryPhase!=='closed'||doorMessage||presentation.active||boxOpening||blackoutPhase!=='idle')return;
+    if(settingsUI.open||ending()||inventoryPhase!=='closed'||doorMessage||presentation.active||boxOpening||blackoutPhase!=='idle')return;
     const grid=bagScreen.querySelector('.inventoryGrid');grid.replaceChildren();
     for(const id of ['star','octopus','cat','moon','island','ship','key205','card','emergency']){
       const slot=document.createElement('div');slot.className='inventorySlot';slot.dataset.item=id;
@@ -133,7 +136,7 @@ export function createGame({playSe, mode, beforeLeftLift, ending, data, scene, c
   }
   function interact(id, input = {}) {
     const d = objects.get(id)?.def; if (!d || (presentation.active && !(['painting','rightLift'].includes(d.id) && input.inWorld))) return false;
-    if (ending() || blackoutPhase!=='idle' || doorMessage || !canReach(d.position,d.room)) return false;
+    if (settingsUI.open || ending() || blackoutPhase!=='idle' || doorMessage || !canReach(d.position,d.room)) return false;
     if(d.id==='courtyardWindow' && state.flags.includes('clownGone'))return false;
     if(d.model==='box203'){
       if(!has(d.requires))return false;
@@ -219,7 +222,7 @@ export function createGame({playSe, mode, beforeLeftLift, ending, data, scene, c
     return finish(d);
   }
   function unlock(id) {
-    if(ending() || blackoutPhase!=='idle' || doorMessage)return false;
+    if(settingsUI.open || ending() || blackoutPhase!=='idle' || doorMessage)return false;
     if(/^room\d+$/.test(id) && state.flags.includes('leftElevatorOpened')){say(data.messages.roomSealed,true);return false;}
     const d=data.doors[id]; if (!d) return true;
     if(d.unlockFlag && state.flags.includes(d.unlockFlag))return true;
@@ -318,7 +321,8 @@ export function createGame({playSe, mode, beforeLeftLift, ending, data, scene, c
   function update(t) {
     updateBlackout();
     bagButton.hidden=blackoutPhase!=='idle' || doorMessage || presentation.active || boxOpening;
-    hintButton.hidden=mode!=='easy' || bagButton.hidden || inventoryPhase!=='closed';
+    hintButton.hidden=bagButton.hidden || inventoryPhase!=='closed' || settingsUI.open;
+    settingsUI.button.hidden=hintButton.hidden;bagButton.hidden ||= settingsUI.open;
     presentation.update(t);
     autoCourtyardWindow();
     if(liftOpening && doorObjects.get('leftLift').t===1){liftOpening=false;liftOpenedAt=performance.now();}   // real time: game time is frozen during the lift event
@@ -331,5 +335,5 @@ export function createGame({playSe, mode, beforeLeftLift, ending, data, scene, c
     const phase=t%9.7, gain=phase>8.7 && (Math.sin(t*51)>.2) ? .06 : 1;
     for(const m of flickerMaterials)m.color.setRGB(.18*gain,.125*gain,.062*gain);
   }
-  return {ready:Promise.all([...objects.values()].map(o=>o.prop?.ready)),debugStartChase(){if(!debug || ending() || state.flags.includes('leftElevatorOpened'))return;if(!state.items.includes('card'))state.items.push('card');beforeLeftLift();markUsed('card');apply(objects.get('leftLift').def.result);},restore(saved){liftEventActive=false;liftOpening=false;liftOpenedAt=null;liftMsgStep=0;say('');closeInventory();Object.assign(state,structuredClone(saved));render();},interact,select,unlock,say,objects,has,update, reachable:id=>{const d=objects.get(id)?.def;return !!d && canReach(d.position,d.room);}, snapshot:()=>structuredClone(state),onEvent:fn=>listeners.add(fn), presentation, eventFigure, paintingDrag, medallionDrag, dialControl, get liftEventActive(){return liftEventActive;},get timeStopped(){return liftEventActive || blackoutPhase!=='idle';},get blackoutActive(){return blackoutPhase!=='idle';},get paused(){return blackoutPhase!=='idle' || ending() || doorMessage || presentation.active || boxOpening || inventoryPhase!=='closed';}};
+  return {ready:Promise.all([...objects.values()].map(o=>o.prop?.ready)),debugStartChase(){if(!debug || ending() || state.flags.includes('leftElevatorOpened'))return;if(!state.items.includes('card'))state.items.push('card');beforeLeftLift();markUsed('card');apply(objects.get('leftLift').def.result);},restore(saved){liftEventActive=false;liftOpening=false;liftOpenedAt=null;liftMsgStep=0;say('');closeInventory();settingsUI.close();Object.assign(state,structuredClone(saved));blackoutPhase='idle';blackoutFade.style.opacity='0';if(state.items.includes('flashlight'))flashlight.restore();for(const o of objects.values())o.prop?.restore?.(state);render();},relabel,interact,select,unlock,say,objects,has,update, reachable:id=>{const d=objects.get(id)?.def;return !!d && canReach(d.position,d.room);}, snapshot:()=>structuredClone(state),onEvent:fn=>listeners.add(fn), presentation, eventFigure, paintingDrag, medallionDrag, dialControl, get liftEventActive(){return liftEventActive;},get timeStopped(){return settingsUI.open || doorMessage || liftEventActive || blackoutPhase!=='idle';},get blackoutActive(){return blackoutPhase!=='idle';},get paused(){return settingsUI.open || blackoutPhase!=='idle' || ending() || doorMessage || presentation.active || boxOpening || inventoryPhase!=='closed';}};
 }
