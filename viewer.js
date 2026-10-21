@@ -790,6 +790,7 @@ async function init() {
   ready = true; setLoad(1);
   const hideLoading = () => { $('#loading').style.opacity = 0; $('#loading').style.pointerEvents = 'none'; setTimeout(() => $('#loading').remove(), 900); };
   hideLoading();
+  if (!continueSave) game.queueObjective(900);   // after the loading screen has faded out
   renderer.setAnimationLoop(animate); updateRooms();
   if (params.has('check') || params.get('debug') === '1') window.hotelCheck = {
     ready: true, camera, world, doors, rooms,

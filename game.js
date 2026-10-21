@@ -5,6 +5,7 @@ import {assetUrl} from './version.js';
 import {createInventoryThumbnails} from './inventory.js';
 import {renderMessage} from './message-text.js';
 import {createDialControl} from './dialprops.js';
+import {createCorridorDecor} from './corridordecor.js';
 import {buildBox} from './boxprops.js';
 export {preloadClown} from './eventprops.js';
 export {preloadBoxProps} from './boxprops.js';
@@ -26,16 +27,17 @@ export function createGame({changeLanguage, save, playSe, beforeLeftLift, ending
   document.body.append(ui);
   const caption = ui.querySelector('#caption');
   let liftEventActive = false, liftOpening = false, liftOpenedAt = null, liftMsgStep = 0;
-  let saidAt = 0, boxOpening = false, doorMessage = false, captionChoice = null, captionDone = null, blackoutPhase = 'idle', blackoutAt = 0;
+  let saidAt = 0, objectiveAt = null, boxOpening = false, doorMessage = false, captionChoice = null, captionDone = null, blackoutPhase = 'idle', blackoutAt = 0;
   const captionChoices=document.createElement("div");captionChoices.className="captionChoices presentationChoices";captionChoices.hidden=true;captionChoices.innerHTML=data.messages.captionChoices;caption.append(captionChoices);
   function endCaptionChoice(yes){const done=captionChoice;captionChoice=null;say('');if(yes)done?.();}
   for(const b of captionChoices.children)b.onclick=e=>{consume(e);endCaptionChoice(b.dataset.dialAnswer==='yes');};
-  const say = (message, pause = true) => {const done = !message ? captionDone : null; captionDone = null; doorMessage = !!message && pause; renderMessage(caption,message);if(captionChoice)caption.append(captionChoices);captionChoices.hidden=!captionChoice; caption.hidden = !message; if (message) saidAt = performance.now(); done?.();};
+  const say = (message, pause = true) => {caption.classList.remove('objective');const done = !message ? captionDone : null; captionDone = null; doorMessage = !!message && pause; renderMessage(caption,message);if(captionChoice)caption.append(captionChoices);captionChoices.hidden=!captionChoice; caption.hidden = !message; if (message) saidAt = performance.now(); done?.();};
   // Dismiss paused captions at pointerdown, consuming the entire gesture.
   let closingPointer = null;
   const consume = e => {e.preventDefault();e.stopImmediatePropagation();};
   document.addEventListener('pointerdown', e => {
     if (!doorMessage) {closingPointer = null; return;}
+    if (objectiveFading()) {consume(e); return;}
     if(captionChoice && e.target.closest?.('.captionChoices'))return;
     closingPointer = e.pointerId;if(captionChoice)endCaptionChoice(false);else say(''); consume(e);
   }, true);
@@ -45,15 +47,29 @@ export function createGame({changeLanguage, save, playSe, beforeLeftLift, ending
   }, true);
   document.addEventListener('keydown', e => {
     if (!doorMessage) return;
-    consume(e);if(captionChoice){if(!e.repeat && e.code==='Escape')endCaptionChoice(false);else if(!e.repeat && ['Enter','Space'].includes(e.code))endCaptionChoice(true);return;} if (!e.repeat && ['Enter','Space'].includes(e.code)) say('');
+    consume(e);if(objectiveFading())return;if(captionChoice){if(!e.repeat && e.code==='Escape')endCaptionChoice(false);else if(!e.repeat && ['Enter','Space'].includes(e.code))endCaptionChoice(true);return;} if (!e.repeat && ['Enter','Space'].includes(e.code)) say('');
   }, true);
   document.addEventListener('click', e => {if (!doorMessage && !caption.hidden && performance.now() - saidAt > 400 && !e.target.closest?.('#gameDebug')) say('');}, true);
+  // Objectives: the current hint under an "Objective" heading, at the start of a new game and right after each
+  // medallion or the flashlight is obtained. They wait until every pickup presentation and message has closed.
+  const OBJECTIVE_ITEMS = ['star', 'octopus', 'cat', 'flashlight'], OBJECTIVE_FADE = 500;
+  const objectiveFading = () => caption.classList.contains('objective') && performance.now() - saidAt < OBJECTIVE_FADE;
+  const queueObjective = (delay = 0) => {objectiveAt = performance.now() + delay;};
+  function showObjective() {
+    if (objectiveAt === null || performance.now() < objectiveAt || !caption.hidden || doorMessage || presentation.active || boxOpening
+      || blackoutPhase !== 'idle' || inventoryPhase !== 'closed' || settingsUI.open || liftEventActive || ending()) return;
+    objectiveAt = null;
+    const text = currentHint(); if (!text) return;
+    say(text, true);
+    const label = document.createElement('div'); label.className = 'objectiveLabel'; label.textContent = data.messages.objectiveLabel;
+    caption.prepend(label); caption.classList.add('objective');
+  }
   const has = c => !c || (c.items ?? []).every(i => state.items.includes(i)) && (c.flags ?? []).every(f => state.flags.includes(f));
   const flag = f => {if (!state.flags.includes(f)) state.flags.push(f);};
   const markUsed = id => {if(!state.used.includes(id))state.used.push(id);};
   function apply(result = {}) {
     for (const i of result.take ?? []) {markUsed(i);state.items = state.items.filter(x => x !== i);}
-    for (const i of result.give ?? []) if (!state.items.includes(i)) state.items.push(i);
+    for (const i of result.give ?? []) if (!state.items.includes(i)) {state.items.push(i);if (OBJECTIVE_ITEMS.includes(i)) queueObjective();}
     for (const f of result.flags ?? []) flag(f);
     for (const id of result.open ?? []) doorObjects.get(id)?.openDoor();
     if (result.event) {window.dispatchEvent(new CustomEvent(result.event)); for (const fn of listeners) fn(result.event);}
@@ -80,6 +96,8 @@ export function createGame({changeLanguage, save, playSe, beforeLeftLift, ending
   }
   function render() {
     eventFigure.visible=!state.flags.includes('clownGone');
+    // Corridor balloons and bunting pile up: cat medallion, then all three medallions, then the flashlight.
+    const f=state.flags;corridorDecor.setStage(state.items.includes('flashlight')?3:['starFound','queenTaken','lodgeTaken'].every(x=>f.includes(x))?2:f.includes('starFound')?1:0);
     eventFigure.userData.haze.visible=eventFigure.visible;
     for (const [id, o] of objects) {
       const taken = o.def.once && state.flags.includes(o.def.once) && o.def.kind === 'pickup';
@@ -91,6 +109,7 @@ export function createGame({changeLanguage, save, playSe, beforeLeftLift, ending
   }
   function select(id) {if (id && !state.items.includes(id)) return false; state.selected = state.selected === id ? null : id; render(); return true;}
   const eventFigure=buildEventProps(scene, rooms, data, renderer);
+  const corridorDecor=createCorridorDecor(scene, rooms);
   const presentation = createPresentation({data, camera, renderer, ui});
   const thumbnail=createInventoryThumbnails(data,renderer);
   let inventoryPhase = 'closed', inventoryTimer;
@@ -320,6 +339,8 @@ export function createGame({changeLanguage, save, playSe, beforeLeftLift, ending
   }
   function update(t) {
     updateBlackout();
+    showObjective();
+    corridorDecor.update(t);
     bagButton.hidden=blackoutPhase!=='idle' || doorMessage || presentation.active || boxOpening;
     hintButton.hidden=bagButton.hidden || inventoryPhase!=='closed' || settingsUI.open;
     settingsUI.button.hidden=hintButton.hidden;bagButton.hidden ||= settingsUI.open;
@@ -335,5 +356,5 @@ export function createGame({changeLanguage, save, playSe, beforeLeftLift, ending
     const phase=t%9.7, gain=phase>8.7 && (Math.sin(t*51)>.2) ? .06 : 1;
     for(const m of flickerMaterials)m.color.setRGB(.18*gain,.125*gain,.062*gain);
   }
-  return {ready:Promise.all([...objects.values()].map(o=>o.prop?.ready)),debugStartChase(){if(!debug || ending() || state.flags.includes('leftElevatorOpened'))return;if(!state.items.includes('card'))state.items.push('card');beforeLeftLift();markUsed('card');apply(objects.get('leftLift').def.result);},restore(saved){liftEventActive=false;liftOpening=false;liftOpenedAt=null;liftMsgStep=0;say('');closeInventory();settingsUI.close();Object.assign(state,structuredClone(saved));blackoutPhase='idle';blackoutFade.style.opacity='0';if(state.items.includes('flashlight'))flashlight.restore();for(const o of objects.values())o.prop?.restore?.(state);render();},relabel,interact,select,unlock,say,objects,has,update, reachable:id=>{const d=objects.get(id)?.def;return !!d && canReach(d.position,d.room);}, snapshot:()=>structuredClone(state),onEvent:fn=>listeners.add(fn), presentation, eventFigure, paintingDrag, medallionDrag, dialControl, get liftEventActive(){return liftEventActive;},get timeStopped(){return settingsUI.open || doorMessage || liftEventActive || blackoutPhase!=='idle';},get blackoutActive(){return blackoutPhase!=='idle';},get paused(){return settingsUI.open || blackoutPhase!=='idle' || ending() || doorMessage || presentation.active || boxOpening || inventoryPhase!=='closed';}};
+  return {ready:Promise.all([...objects.values()].map(o=>o.prop?.ready)),debugStartChase(){if(!debug || ending() || state.flags.includes('leftElevatorOpened'))return;if(!state.items.includes('card'))state.items.push('card');beforeLeftLift();markUsed('card');apply(objects.get('leftLift').def.result);},restore(saved){objectiveAt=null;liftEventActive=false;liftOpening=false;liftOpenedAt=null;liftMsgStep=0;say('');closeInventory();settingsUI.close();Object.assign(state,structuredClone(saved));blackoutPhase='idle';blackoutFade.style.opacity='0';if(state.items.includes('flashlight'))flashlight.restore();for(const o of objects.values())o.prop?.restore?.(state);render();},relabel,interact,select,unlock,say,queueObjective,corridorDecor,objects,has,update, reachable:id=>{const d=objects.get(id)?.def;return !!d && canReach(d.position,d.room);}, snapshot:()=>structuredClone(state),onEvent:fn=>listeners.add(fn), presentation, eventFigure, paintingDrag, medallionDrag, dialControl, get liftEventActive(){return liftEventActive;},get timeStopped(){return settingsUI.open || doorMessage || liftEventActive || blackoutPhase!=='idle';},get blackoutActive(){return blackoutPhase!=='idle';},get paused(){return settingsUI.open || blackoutPhase!=='idle' || ending() || doorMessage || presentation.active || boxOpening || inventoryPhase!=='closed';}};
 }

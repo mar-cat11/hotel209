@@ -920,7 +920,7 @@
       ]
     },
     {
-      "text": "右のエレベーターに、メダリオンをはめてみよう。",
+      "text": "右のエレベーターを調べよう。",
       "done": [
         "rightElevatorOpened"
       ]
@@ -970,6 +970,7 @@
     "giveUpLabel": "タイトルに戻る",
     "giveUpQuestion": "タイトルに戻りますか？\nセーブしていない進み具合は失われます。",
     "closeLabel": "閉じる",
+    "objectiveLabel": "小目標",
     "privacyLabel": "プライバシーポリシー",
     "captionChoices": "<button data-dial-answer=\"yes\">はい</button><button data-dial-answer=\"no\">いいえ</button>",
     "blackoutNotice": "フロアの電気が消えたようだ。",

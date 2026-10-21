@@ -23,9 +23,9 @@ function buildKey(d){
 }
 
 function buildKey205(renderer,d){
- // Brass 205 key lying on a piece of dark felt inside the keepsake box.
- const content=new THREE.Group(),felt=new THREE.Mesh(new THREE.BoxGeometry(.21,.003,.125),new THREE.MeshBasicMaterial({color:0x17130f}));
- felt.position.set(0,.0135,.004);content.add(felt);const holder=new THREE.Group();holder.position.set(.012,.0152,.012);holder.rotation.y=-.5;content.add(holder);
+ // Brass 205 key lying on the floor of the keepsake box (floor top at 1.2 cm; the key reaches 1 mm below its origin),
+ // towards the back (-z) so the box's front wall does not hide it from where the player stands.
+ const content=new THREE.Group(),holder=new THREE.Group();holder.position.set(.012,.013,-.04);holder.rotation.y=-.5;content.add(holder);
  const ready=buildHotelKey(renderer).then(k=>holder.add(k));
  return {group:content,ready,sync:state=>{content.visible=!state.flags.includes(d.takenFlag);}};
 }
